@@ -1,0 +1,71 @@
+
+module wrapforjulia
+
+  use realprec
+  use kronlininv
+  use iso_c_binding, only : c_float,c_int,c_double, c_ptr
+  implicit none
+
+contains
+
+  !========================================================
+
+  subroutine c_calcfactors(nd1,nd2,nd3,nm1,nm2,nm3,&
+       G1,G2,G3,Cm1,Cm2,Cm3,Cd1,Cd2,Cd3,&
+       U1,U2,U3,diaginvlambda,iUCm1,iUCm2,iUCm3,&
+       iUCmGtiCd1,iUCmGtiCd2,iUCmGtiCd3 )  bind(c) 
+    integer(c_int),intent(in) :: nd1,nd2,nd3,nm1,nm2,nm3
+    real(c_double) :: Cm1(nm1,nm1)
+    real(c_double),intent(in) :: G1(nd1,nm1),G2(nd2,nm2),G3(nd3,nm3),&
+         Cm2(nm2,nm2),Cm3(nm3,nm3),&
+         Cd1(nd1,nd1),Cd2(nd2,nd2),Cd3(nd3,nd3)    
+    real(c_double),intent(out) :: U1(nm1,nm1),U2(nm2,nm2),U3(nm3,nm3),&
+         iUCm1(nm1,nm1),iUCm2(nm2,nm2),iUCm3(nm3,nm3),&
+         iUCmGtiCd1(nm1,nd1),iUCmGtiCd2(nm2,nd2),iUCmGtiCd3(nm3,nd3),&
+         diaginvlambda(nm1*nm2*nm3)
+    ! print*,
+    ! print*,shape(U1),shape(U2),shape(U3)
+    ! print*,shape(iUCm1),shape(iUCm2),shape(iUCm3)
+    ! print*,shape(iUCmGtiCd1),shape(iUCmGtiCd2),shape(iUCmGtiCd3)
+    ! print*,
+    call calcfactors(G1,G2,G3,Cm1,Cm2,Cm3,Cd1,Cd2,Cd3,&
+         U1,U2,U3,diaginvlambda,iUCm1,iUCm2,iUCm3,&
+         iUCmGtiCd1,iUCmGtiCd2,iUCmGtiCd3 )
+  end subroutine c_calcfactors
+
+  !========================================================
+
+  subroutine c_posteriormean(nd1,nd2,nd3,nm1,nm2,nm3,U1,U2,U3, &
+       diaginvlambda, Z1,Z2,Z3,&
+       G1,G2,G3, mprior, dobs, postm) bind(c)
+    integer(c_int),intent(in) :: nd1,nd2,nd3,nm1,nm2,nm3
+    real(c_double),intent(in) :: U1(nm1,nm1),U2(nm2,nm2),U3(nm3,nm3),&
+         G1(nd1,nm1),G2(nd2,nm2),G3(nd3,nm3),&
+         diaginvlambda(nm1*nm2*nm3),Z1(nm1,nd1),Z2(nm2,nd2),Z3(nm3,nd3),&
+         mprior(nm1*nm2*nm3),dobs(nd1*nd2*nd3)
+    real(c_double),intent(out) :: postm(nm1*nm2*nm3)
+    call posteriormean(U1,U2,U3, diaginvlambda, Z1,Z2,Z3,&
+       G1,G2,G3, mprior, dobs, postm)
+  end subroutine c_posteriormean
+
+  !========================================================
+
+  subroutine c_blockpostcov(nm1,nm2,nm3,&
+       U1,U2,U3, diaginvlambda, &
+       iUCm1,iUCm2,iUCm3, astart,aend,bstart,bend, postC) bind(c)
+    integer(c_int),intent(in) :: nm1,nm2,nm3
+    real(c_double),intent(in) :: U1(nm1,nm1),U2(nm2,nm2),U3(nm3,nm3),&
+         iUCm1(nm1,nm1),iUCm2(nm2,nm2),iUCm3(nm3,nm3)
+    real(c_double),intent(in) :: diaginvlambda(nm1*nm2*nm3) 
+    integer(c_int),intent(in) :: astart,aend,bstart,bend
+    real(c_double),intent(out) :: postC(aend-astart+1,bend-bstart+1)
+    integer :: astart2,aend2,bstart2,bend2
+    print*,'astart:',astart2,'aend:',aend2
+    print*,'bstart:',bstart2,'bend:',bend2
+    call blockpostcov(U1,U2,U3, diaginvlambda, &
+         iUCm1,iUCm2,iUCm3, astart2,aend2,bstart2,bend2, postC)
+  end subroutine c_blockpostcov
+  
+  !========================================================
+  
+end module wrapforjulia
