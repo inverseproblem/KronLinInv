@@ -33,7 +33,7 @@ The latter should be used for solving large size problems e.g. on a cluster comp
 KronLinInv is thought as a set of subroutines, such that it can be embedded in other code. However, two standalone test programs are provided, test_kronlininv.f08 and test_ompi_kronlininv.f08, one for each version, which read input data from a HDF5 file (HDF5 library for Fortran must be installed) and write the results to another HDF5 file.
 
 
-KronLinInv solves the linear inverse problem with gaussian uncertainties
+KronLinInv solves the linear inverse problem with Gaussian uncertainties
 represented by the following objective function:
 \f[
  S( \mathbf{m}) = \frac{1}{2} ( \mathbf{G} \mathbf{m} - \mathbf{d}_{\sf{obs}} )^{\sf{T}}
