@@ -11,16 +11,10 @@
  If you use this code for research or else, please cite the related paper: 
 
 Andrea Zunino, Klaus Mosegaard,
-An efficient method to solve large linearizable inverse problems under Gaussian and separability assumptions,
-Computers & Geosciences, 2018
+ <b>An efficient method to solve large linearizable inverse problems under Gaussian and separability assumptions</b>,
+<em>Computers & Geosciences</em>, 2018
 ISSN 0098-3004, <https://doi.org/10.1016/j.cageo.2018.09.005>.
    
-@author
-Andrea Zunino 
-
-Niels Bohr Institute, University of Copenhagen 
-
-
 See the paper mentioned above for a detailed description.
 
 Two versions of the code are provided:
@@ -122,9 +116,12 @@ Several routines are provided:
 
 - posteriormean(): Computes the posterior mean model
 
+@author
+Andrea Zunino \n
+Niels Bohr Institute, University of Copenhagen 
 
 */
 
 
 
-!
+
