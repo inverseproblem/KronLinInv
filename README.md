@@ -18,7 +18,7 @@ Few versions of the code for different languages are provided:
 
 - Python: a pure Python implementation (quite slow, mostly for learning purposes) and wrappers from Python to the Fortran routines.
 
-The reference implementation of this program is in the form of Fortran subroutines, to be included in the user's code, however, a couple of test programs reading input and writing output from/to HDF5 files are provided for convenience. Please see the documentation attached to the Fortran version.
+The reference implementation of this program is in the form of Fortran subroutines, to be included in the user's code, however, a couple of test programs reading input and writing output from/to HDF5 files are provided for convenience. Please see the documentation attached to the Fortran version at https://inverseproblem.github.io/KronLinInv/.
 
 
 
