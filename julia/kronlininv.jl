@@ -2,6 +2,7 @@
 
 ##==========================================================
 module kronlininv
+
 using Distributed
 using Libdl
 using LinearAlgebra
@@ -252,9 +253,6 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
     ##  Gs have different shape than Us !!
     
     ####===================================
-    ## unrolled version
-
-
 
     if runparallel==true 
         ####================================================
@@ -267,7 +265,6 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
         firstwork = idcpus[1]
         numwork = nworkers()
         println("posteriormean(): parallel run using $numwork cpus")
-
         
         ##################################################
         #             loop 1                             #
@@ -277,28 +274,6 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
         everynit = looping[1,2]>100 ? div(looping[1,2],100) : 2
 
         ddiff = Array{Float64}(undef,Nb)
-
-        ##############################################################
-        # # distribute work
-        # dis_ddiff =  Array{Future}(undef,numwork)
-        # for ip=1:numwork 
-        #     bstart,bend = looping[ip,1],looping[ip,2]
-        #     ## distribute work to specific cores (spawnAT)
-        #     dis_ddiff[ip]= @spawnat idcpus[ip]  comp_ddiff(everynit,firstwork,
-        #                                                    iv,lv,jv,mv,kv,nv,
-        #                                                    G1,G2,G3,
-        #                                                    mprior,dobs,
-        #                                                    bstart,bend)
-        # end
-        # # fetch results
-        # for ip=1:numwork 
-        #     bstart,bend = looping[ip,1],looping[ip,2]
-        #     ddiff[bstart:bend] = fetch(dis_ddiff[ip])
-        # end
-        ##############################################################
-
-
-        ################################################################################
         @sync begin
             for ip=1:numwork 
                 bstart,bend = looping[ip,1],looping[ip,2]
@@ -309,11 +284,7 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
                                                              G1,G2,G3,mprior,dobs,
                                                              bstart,bend)
             end
-        end # begin
-        ################################################################################
-
-
-
+        end 
 
         ##################################################
         #             loop 2                             #
@@ -322,33 +293,8 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
         startt = time()
         ## Na
         scheduling,looping = spreadwork(Na,numwork,1) ## Na!!
-
-        #comp_Zh()
         
         Zh = Array{Float64}(undef,Na)
-        # distribute work
-
-        
-        ##############################################################
-        # dis_Zh =  Array{Future}(undef,numwork)
-        # for ip=1:numwork 
-        #     astart,aend = looping[ip,1],looping[ip,2]
-        #     ## distribute work to specific cores (spawnAT)
-        #     dis_Zh[ip]= @spawnat idcpus[ip]  comp_Zh(everynit,firstwork,
-        #                                                 iv,lv,jv,mv,kv,nv,
-        #                                                 Z1,Z2,Z3,ddiff,
-        #                                                 astart,aend)
-        # end
-        # # fetch results
-        # for ip=1:numwork 
-        #     astart,aend = looping[ip,1],looping[ip,2]
-        #     Zh[astart:aend] = fetch(dis_Zh[ip])
-        # end
-        ##############################################################
-
-
-        
-        ##############################################################
         @sync begin
             for ip=1:numwork 
                 astart,aend = looping[ip,1],looping[ip,2]
@@ -360,11 +306,6 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
                                                           astart,aend)
             end
         end
-        ##############################################################
-
-
-
-
         
         ##################################################
         #             loop 3                             #
@@ -374,32 +315,10 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
         scheduling,looping = spreadwork(Na,numwork,1) ## Na!!
 
         postm = Array{Float64}(undef,Na)
-        # distribute work
-
-
-        ##############################################################
-        # dis_postm =  Array{Future}(undef,numwork)
-        # for ip=1:numwork 
-        #     astart,aend = looping[ip,1],looping[ip,2]
-        #     ## distribute work to specific cores (spawnAT)
-        #     dis_postm[ip]= @spawnat idcpus[ip]  comp_postm(everynit,firstwork,
-        #                                                    iv,lv,jv,mv,kv,nv,
-        #                                                    U1,U2,U3,
-        #                                                    diaginvlambda,Zh,
-        #                                                    mprior,astart,aend)
-        # end
-        # # fetch results
-        # for ip=1:numwork 
-        #     astart,aend = looping[ip,1],looping[ip,2]
-        #     postm[astart:aend] = fetch(dis_postm[ip])
-        # end
-        ##############################################################
-
-        ##############################################################
         @sync begin
             for ip=1:numwork 
                 astart,aend = looping[ip,1],looping[ip,2]
-                ## distribute work to specific cores (spawnAT)
+                ## distribute work to specific cores 
                 @async postm[astart:aend] = remotecall_fetch(comp_postm,idcpus[ip],
                                                             everynit,firstwork,
                                                             iv,lv,jv,mv,kv,nv,
@@ -408,6 +327,7 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
                                                             mprior,astart,aend)
             end
         end
+        
         ##############################################################
 
 
@@ -433,10 +353,10 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
             end
             datp = 0.0
             for j=1:Na
-                @inbounds elG = G1[lv[b],iv[j]] * G2[mv[b],jv[j]] * G3[nv[b],kv[j]]
-                @inbounds datp = datp +  mprior[j] * elG
+                elG = G1[lv[b],iv[j]] * G2[mv[b],jv[j]] * G3[nv[b],kv[j]]
+                datp = datp +  mprior[j] * elG
             end        
-            @inbounds ddiff[b] = dobs[b] - datp
+            ddiff[b] = dobs[b] - datp
             #println("$b $(ddiff[b]) $(dobs[b])")
         end
 
@@ -454,8 +374,8 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
             ## compute Zh
             Zh[i]=0.0
             for j=1:Nb
-                @inbounds tZZ = Z1[iv[i],lv[j]] * Z2[jv[i],mv[j]] * Z3[kv[i],nv[j]]
-                @inbounds Zh[i] = Zh[i] + tZZ * ddiff[j]
+                tZZ = Z1[iv[i],lv[j]] * Z2[jv[i],mv[j]] * Z3[kv[i],nv[j]]
+                Zh[i] = Zh[i] + tZZ * ddiff[j]
             end
         end
         
@@ -474,14 +394,14 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
             elUDZh[i] = 0.0
             for j=1:Na
                 # element of row of UD
-                @inbounds elrowUD = U1[iv[i],iv[j]] * U2[jv[i],jv[j]] *
+                elrowUD = U1[iv[i],iv[j]] * U2[jv[i],jv[j]] *
                     U3[kv[i],kv[j]] * diaginvlambda[j]
                 # element of final vector
-                @inbounds elUDZh[i] = elUDZh[i] + elrowUD * Zh[j]
+                elUDZh[i] = elUDZh[i] + elrowUD * Zh[j]
             end
 
             ## element of the posterior mean
-            @inbounds postm[i] = mprior[i] + elUDZh[i] # sum(bigmatrow.*ddiff)
+            postm[i] = mprior[i] + elUDZh[i] # sum(bigmatrow.*ddiff)
         end
         print("\n")
     end
@@ -582,10 +502,10 @@ function comp_ddiff(everynit::Int64,firstwork::Int64,
 
         datp = 0.0
         for j=1:Na
-            @inbounds elG = G1[lv[b],iv[j]] * G2[mv[b],jv[j]] * G3[nv[b],kv[j]]
-            @inbounds datp = datp +  mprior[j] * elG
+            elG = G1[lv[b],iv[j]] * G2[mv[b],jv[j]] * G3[nv[b],kv[j]]
+            datp = datp +  mprior[j] * elG
         end        
-        @inbounds ddiff[myb] = dobs[b] - datp
+        ddiff[myb] = dobs[b] - datp
     end
     return ddiff
 end
@@ -620,8 +540,8 @@ function comp_Zh(everynit::Int64,firstwork::Int64,
 
         Zh[mya]=0.0
         for j=1:Nb
-            @inbounds tZZ = Z1[iv[i],lv[j]] * Z2[jv[i],mv[j]] * Z3[kv[i],nv[j]]
-            @inbounds Zh[mya] = Zh[mya] + tZZ * ddiff[j]
+            tZZ = Z1[iv[i],lv[j]] * Z2[jv[i],mv[j]] * Z3[kv[i],nv[j]]
+            Zh[mya] = Zh[mya] + tZZ * ddiff[j]
         end
     end
     return Zh
@@ -664,14 +584,14 @@ function comp_postm(everynit::Int64,firstwork::Int64,
         elUDZh[mya] = 0.0
         for j=1:Na
             # element of row of UD
-            @inbounds elrowUD = U1[iv[i],iv[j]] * U2[jv[i],jv[j]] *
+            elrowUD = U1[iv[i],iv[j]] * U2[jv[i],jv[j]] *
                 U3[kv[i],kv[j]] * diaginvlambda[j]
             # element of final vector
-            @inbounds elUDZh[mya] = elUDZh[mya] + elrowUD * Zh[j]
+            elUDZh[mya] = elUDZh[mya] + elrowUD * Zh[j]
         end
 
         ## element of the posterior mean
-        @inbounds postm[mya] = mprior[i] + elUDZh[mya] # sum(bigmatrow.*ddiff)
+        postm[mya] = mprior[i] + elUDZh[mya] # sum(bigmatrow.*ddiff)
     end
     return postm
 end
