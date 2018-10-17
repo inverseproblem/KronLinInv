@@ -1,0 +1,5 @@
+<map id="kronlininv::calcfactors" name="kronlininv::calcfactors">
+<area shape="rect" id="node2" href="$namespacekronlininv_a4d73ff34517d5547a84132298aa63d5b.html#a4d73ff34517d5547a84132298aa63d5b" title=" Solves a linear system AX = B for symmetric A, real numbers &#160;" alt="" coords="209,5,359,32"/>
+<area shape="rect" id="node3" href="$namespacekronlininv_aa123cda4f02fac2a6f544e21689b8cbe.html#aa123cda4f02fac2a6f544e21689b8cbe" title=" Computes eigenvalues and eigenvectors of the generalized symmetric definite eigenproblem. &#160;See http://www.netlib.org/lapack/lug/node54.html " alt="" coords="203,56,365,83"/>
+<area shape="rect" id="node4" href="$namespacekronlininv_aab54a748a62b6a9a111d2447a9a48f45.html#aab54a748a62b6a9a111d2447a9a48f45" title=" Solves a linear system AX = B, real numbers &#160;" alt="" coords="221,107,347,133"/>
+</map>

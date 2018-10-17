@@ -5,7 +5,6 @@
 !> @author
 !> Andrea Zunino \n
 !> Niels Bohr Institute, University of Copenhagen \n
-!> zunino@nbi.dk
 !
 !-----------------------------------------------------
 program test

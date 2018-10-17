@@ -12,8 +12,7 @@
 !> @author
 !> Andrea Zunino \n
 !> Niels Bohr Institute, University of Copenhagen \n
-!> zunino@nbi.dk
-!
+!>
 !> @brief Sets precision of real variables
 !
 !-------------------------------------------------------------
@@ -44,7 +43,7 @@ end module realprec
 !> @author
 !> Andrea Zunino \n
 !> Niels Bohr Institute, University of Copenhagen \n
-!> zunino@nbi.dk
+!
 !
 !> @brief Procedures to perform linear inversion under gaussian assumptions using
 !>  the Kronecker-product approach.
