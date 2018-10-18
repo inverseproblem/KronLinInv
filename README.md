@@ -1,8 +1,8 @@
 # KronLinInv
 
- Kronecker-product-based linear inversion under Gaussian and separability assumptions.
- 
- If you use this code for research or else, please cite the related paper:
+Kronecker-product-based linear inversion of geophysical (or other kinds of) data under Gaussian and separability assumptions. The code computes the posterior mean model and the posterior covariance matrix (or subsets of it) in an efficient manner (parallel algorithm) taking into account 3-D correlations both in the model parameters and in the observed data.
+
+If you use this code for research or else, please cite the related paper:
  
 Andrea Zunino, Klaus Mosegaard,
 **An efficient method to solve large linearizable inverse problems under Gaussian and separability assumptions**,
