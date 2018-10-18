@@ -579,7 +579,6 @@ contains
   !>  @date 27/13/2016 - New ETA calculations
   !>  @date 27/1/2017 - OpenMPI version
   !
-  !
   !-------------------------------------------------  
   subroutine blockpostcov(U1,U2,U3, diaginvlambda, &
        iUCm1,iUCm2,iUCm3, astart,aend,bstart,bend, postC) 
