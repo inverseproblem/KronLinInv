@@ -73,8 +73,8 @@ wrapforjulia:
 
 ## Compile Fortran wrappers for Python using f2py
 wrapforpython: 
-# @echo "Creating double-type mapping for f2py in file .f2py_f2cmap"
-# @cat <<EOF > python/.f2py_f2cmap
+# echo "Creating double-type mapping for f2py in file .f2py_f2cmap"
+# cat <<EOF > python/.f2py_f2cmap
 # dict( real= dict(dp='double', c_double='double'),integer = dict(c_int='int') )
 # EOF
 	$(FC) -std=f2008 -O3 -fPIC -c fortran/kronlininv.f08 -o python/kronlininv.o $(OMP)
