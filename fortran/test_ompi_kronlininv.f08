@@ -85,7 +85,7 @@ program test
   call readreal2Darrh5(inpfile,'Cd1',Cd1)
   call readreal2Darrh5(inpfile,'Cd2',Cd2)
   call readreal2Darrh5(inpfile,'Cd3',Cd3)
-  call readreal1Darrh5(inpfile,'mtrue',mtrue)
+  !!call readreal1Darrh5(inpfile,'mtrue',mtrue) !! for testing
   call readreal1Darrh5(inpfile,'dobs',dobs)
   call readreal1Darrh5(inpfile,'mprior',mprior)
 
@@ -103,7 +103,7 @@ program test
      call writereal2Darrh5(outfile,'Cd1',Cd1)
      call writereal2Darrh5(outfile,'Cd2',Cd2)
      call writereal2Darrh5(outfile,'Cd3',Cd3)
-     call writereal1Darrh5(outfile,'mtrue',mtrue)
+     !!call writereal1Darrh5(outfile,'mtrue',mtrue) !! for testing
      call writereal1Darrh5(outfile,'dobs',dobs)
      call writereal1Darrh5(outfile,'mprior',mprior)
   end if
