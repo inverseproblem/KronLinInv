@@ -59,15 +59,20 @@ program test
   
   !! simname -> name of the input file (without the .hdf5)
 
-  iar = 1 
-  call get_command_argument(iar, simname)
+  ! iar = 1 
+  ! call get_command_argument(iar, simname)
 
-  inpfile = trim(simname)//'.h5'
-  outfile = trim(simname)//'_output.h5'
+  ! inpfile = trim(simname)//'.h5'
+  ! outfile = trim(simname)//'_output.h5'
 
+  inpfile = "test_data_8100parameters.h5"
+  outfile = "test_data_8100parameters_sharedmem_output.h5"
+  
+  print*,""
   print*,"inpfile:",trim(inpfile)
   print*,"outfile:",trim(outfile)
-
+  print*,""
+  
   !----------------------------------
   
   !! read all input arrays
@@ -81,7 +86,7 @@ program test
   call readreal2Darrh5(inpfile,'Cd1',Cd1)
   call readreal2Darrh5(inpfile,'Cd2',Cd2)
   call readreal2Darrh5(inpfile,'Cd3',Cd3)
-  call readreal1Darrh5(inpfile,'mtrue',mtrue)
+  !!call readreal1Darrh5(inpfile,'mtrue',mtrue) !! for testing
   call readreal1Darrh5(inpfile,'dobs',dobs)
   call readreal1Darrh5(inpfile,'mprior',mprior)
   
@@ -96,7 +101,7 @@ program test
   call writereal2Darrh5(outfile,'Cd1',Cd1)
   call writereal2Darrh5(outfile,'Cd2',Cd2)
   call writereal2Darrh5(outfile,'Cd3',Cd3)
-  call writereal1Darrh5(outfile,'mtrue',mtrue)
+  !!call writereal1Darrh5(outfile,'mtrue',mtrue) !! for testing
   call writereal1Darrh5(outfile,'dobs',dobs)
   call writereal1Darrh5(outfile,'mprior',mprior)
   
@@ -111,8 +116,8 @@ program test
   nd = nd1*nd2*nd3
 
   print*,"Sizes:"
-  print*,"M:",nm1,nm2,nm3,nm
-  print*,"D:",nd1,nd2,nd3,nd
+  print*,"M:",nm1,nm2,nm3," tot. ", nm
+  print*,"D:",nd1,nd2,nd3," tot. ",nd
   print*
     
   !! allocate working arrays
@@ -128,7 +133,7 @@ program test
        U1,U2,U3,invlambda,iUCm1,iUCm2,iUCm3,&
        iUCmGtiCd1,iUCmGtiCd2,iUCmGtiCd3 )
 
-
+   
   call writereal2Darrh5(outfile,'U1',U1)
   call writereal2Darrh5(outfile,'U2',U2)
   call writereal2Darrh5(outfile,'U3',U3)
@@ -148,7 +153,8 @@ program test
   postm=0.0_dp
 
   call cpu_time(start)
-  print*,'Computing post mean'
+  print*,""
+  print*,'Computing posterior mean [postm in output HDF5 file]'
   call posteriormean(U1,U2,U3, invlambda, iUCmGtiCd1,iUCmGtiCd2,iUCmGtiCd3,&
        G1,G2,G3,mprior,dobs, postm ) 
   call cpu_time(finish)
@@ -157,48 +163,38 @@ program test
   call writereal1Darrh5(outfile,'postm',postm)
 
 
-  
-  ! print*,'Computing postcov'
-  ! i1 = 1
-  ! i2 = 1000
-  ! j1 = 1
-  ! j2 = 1000
-  ! allocate(postcov(i2-i1+1,j2-j1+1))
-  ! postcov = 0.0_dp
-  ! call cpu_time(start)
-  ! call blockpostcov(U1,U2,U3, invlambda,iUCm1,iUCm2,iUCm3, &
-  !                i1,i2,j1,j2, postcov(i1:i2,j1:j2))     
-  ! call cpu_time(finish)
-  ! print*,'postCov block time:',finish-start
-  ! !! write posterior covariance
-  ! call writereal2Darrh5(outfile,'postcov',postcov)
+  print*,""
+  print*,'Computing posterior covariance [postcov in output HDF5 file]'
+  i1 = 1
+  i2 = 1000
+  j1 = 1
+  j2 = 1000
+  allocate(postcov(i2-i1+1,j2-j1+1))
+  postcov = 0.0_dp
+  call cpu_time(start)
+  call blockpostcov(U1,U2,U3, invlambda,iUCm1,iUCm2,iUCm3, &
+                 i1,i2,j1,j2, postcov(i1:i2,j1:j2))     
+  call cpu_time(finish)
+  print*,'postCov block time:',finish-start
+  !! write posterior covariance
+  call writereal2Darrh5(outfile,'postcov',postcov)
 
   
-  ! print*,
-  ! print*,'computing postcov_diag'
-  ! !!http://www.netlib.org/lapack/lug/node124.html
-  ! lowdiag = 0
-  ! updiag  = 0
-  ! allocate(postcov_diag(1,nm))
-  ! postcov_diag = 0.0_dp
-  ! call cpu_time(start)
-  ! call bandpostcov(U1,U2,U3, invlambda,iUCm1,iUCm2,iUCm3, &
-  !                lowdiag,updiag, postcov_diag)     
-  ! call cpu_time(finish)
-  ! print*,'postCov band time:',finish-start
-  ! !! write posterior covariance
-  ! call writereal2Darrh5(outfile,'postcov_diag',postcov_diag)
-
-
-  ! print*,'Computing band of post cov'
-  ! lowdiag = 10
-  ! updiag  = 10
-  ! !! allocate the array for band storage
-  ! allocate(bandpostC(lowdiag+updiag+1,nm))
-  ! call bandpostcov(U1,U2,U3, invlambda,iUCm1,iUCm2,iUCm3, &
-  !                 lowdiag, updiag, bandpostC) 
-  ! !! write posterior covariance
-  ! call writereal2Darrh5(outfile,'bandpostcov',bandpostC)
+  print*,""
+  print*,'Computing a band of the posterior covariance [bandpostcov in output HDF5 file]'
+  !! Band Storage
+  !! http://www.netlib.org/lapack/lug/node124.html
+  lowdiag = 10
+  updiag  = 10
+  allocate(postcov_diag(lowdiag+updiag+1,nm))
+  postcov_diag = 0.0_dp
+  call cpu_time(start)
+  call bandpostcov(U1,U2,U3, invlambda,iUCm1,iUCm2,iUCm3, &
+                 lowdiag,updiag, postcov_diag)     
+  call cpu_time(finish)
+  print*,'postCov band time:',finish-start
+  !! write posterior covariance
+  call writereal2Darrh5(outfile,'bandpostcov',postcov_diag)
 
   
 

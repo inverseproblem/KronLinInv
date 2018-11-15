@@ -63,19 +63,26 @@ program test
 
   !! simname -> name of the input file (without the .hdf5)
   
-  iar = 1 
-  call get_command_argument(iar, simname)
+  ! iar = 1 
+  ! call get_command_argument(iar, simname)
 
-  inpfile = trim(simname)//'.h5'
-  outfile = trim(simname)//'_output.h5'
+  ! inpfile = trim(simname)//'.h5'
+  ! outfile = trim(simname)//'_output.h5'
 
-  print*,"inpfile:",trim(inpfile)
-  print*,"outfile:",trim(outfile)
+  inpfile = "test_data_8100parameters.h5"
+  outfile = "test_data_8100parameters_distribmem_output.h5"
+  
+  if (myrank==masterrank) then
+     print*,""
+     print*,"inpfile:",trim(inpfile)
+     print*,"outfile:",trim(outfile)
+     print*,""
+  end if
 
   !----------------------------------
 
   !! read all input arrays
-  print*,'reading input arrays'
+  if (myrank==masterrank) print*,'reading input arrays'
   call readreal2Darrh5(inpfile,'G1',G1)
   call readreal2Darrh5(inpfile,'G2',G2)
   call readreal2Darrh5(inpfile,'G3',G3)
@@ -93,7 +100,6 @@ program test
   
   if (myrank==masterrank) then
      !! write arrays to output file
-     print*,"WRITE hello from ",myrank,masterrank 
      call writereal2Darrh5(outfile,'G1',G1)
      call writereal2Darrh5(outfile,'G2',G2)
      call writereal2Darrh5(outfile,'G3',G3)
@@ -119,10 +125,12 @@ program test
   nm = nm1*nm2*nm3
   nd = nd1*nd2*nd3
 
-  print*,"Sizes:"
-  print*,"M:",nm1,nm2,nm3,nm
-  print*,"D:",nd1,nd2,nd3,nd
-  print*
+  if (myrank==masterrank) then
+     print*,"Sizes:"
+     print*,"M:",nm1,nm2,nm3,nm
+     print*,"D:",nd1,nd2,nd3,nd
+     print*
+  endif
 
   !! allocate working arrays
   print*,'Allocating working arrays'
@@ -133,13 +141,15 @@ program test
 
 
   !! compute the factors for post mean and covariance
-  print*,'Computing the factors for post mean and covariance'
+  if (myrank==masterrank) print*,'Computing the factors for post mean and covariance'
+
   call calcfactors(G1,G2,G3,Cm1,Cm2,Cm3,Cd1,Cd2,Cd3,&
        U1,U2,U3,invlambda,iUCm1,iUCm2,iUCm3,&
        iUCmGtiCd1,iUCmGtiCd2,iUCmGtiCd3 )
-  print*,'END computing the factors for post mean and covariance'
   
-    
+  if (myrank==masterrank)  print*,'END computing the factors for post mean and covariance'
+
+
   call para_barrier()
   if (myrank==masterrank) then 
      call writereal2Darrh5(outfile,'U1',U1)
@@ -158,21 +168,22 @@ program test
 
     
   !!=====================================================================
+  if (myrank==masterrank) then
+     print*,""
+     print*,'Computing posterior mean [postm in output HDF5 file]'
+     !call cpu_time(start)
+  end if
+  
   call para_barrier()
   allocate(postm(nm)) 
   postm=0.0_dp
-
-  if (myrank==masterrank) then
-     call cpu_time(start)
-     print*,'Computing post mean'
-  end if
-  
+    
   call posteriormean(U1,U2,U3, invlambda, iUCmGtiCd1,iUCmGtiCd2,iUCmGtiCd3,&
        G1,G2,G3,mprior,dobs, postm ) 
   
   if (myrank==masterrank) then
-     call cpu_time(finish)
-     print*,'postm time:',finish-start
+     !call cpu_time(finish)
+     !print*,'postm time:',finish-start
      !! write posterior mean
      call writereal1Darrh5(outfile,'postm',postm)
   end if
@@ -184,23 +195,24 @@ program test
  
   !!=====================================================================
   call para_barrier()
+  if (myrank==masterrank) then
+     print*,""
+     print*,'Computing a block of the posterior covariance [postcov in output HDF5 file]'
+     !call cpu_time(start)
+  end if
+  
   allocate(postcov(nm,nm))
   postcov = 0.0_dp
   i1 = 10
   i2 = 1000
   j1 = 15
   j2 = 1000
-  if (myrank==masterrank) then
-     call cpu_time(start)
-     print*,'Computing block postcov'
-  end if
-     
   call blockpostcov(U1,U2,U3, invlambda,iUCm1,iUCm2,iUCm3, &
                  i1,i2,j1,j2, postcov(i1:i2,j1:j2))     
 
   if (myrank==masterrank) then
-     call cpu_time(finish)
-     print*,'postcov block time:',finish-start
+     ! call cpu_time(finish)
+     ! print*,'postcov block time:',finish-start
      !! write posterior covariance
      call writereal2Darrh5(outfile,'postcov',postcov)
   end if  
@@ -209,10 +221,13 @@ program test
   
 
 
-
   !!=====================================================================
   call para_barrier()
-  if (myrank==masterrank) print*,'Computing band of post cov'
+  if (myrank==masterrank) then
+     print*,""
+     print*,'Computing a band of the posterior covariance [bandpostcov in output HDF5 file]'
+  end if
+  
   lowdiag = 10
   updiag  = 10
   !! allocate the array for band storage
@@ -229,7 +244,6 @@ program test
 
   
   call para_finish()
-  !stop
   !!-------------------------------------------------------------
 
 end program

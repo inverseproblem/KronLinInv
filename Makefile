@@ -32,13 +32,17 @@ MPIFC = mpifort
 FC = gfortran
 
 ## Output dir for Fortran executables
-OUTDIR = test/
+OUTDIR = examples/
 
 ## Shared memory parallelism, set to nothing if OpenMP is not available 
 OMP = -fopenmp 
 
 ## options for gfortran, may differ for other compilers
 OPTFOR =  -std=f2008 -O3 -funroll-loops -llapack -lblas
+
+## DEBUG
+##OPTFOR = -std=f2008 -g -fcheck=all -fbounds-check -Wrealloc-lhs-all -llapack -lblas
+
 ## include/linking for HDF5 libraries, system-depent
 LIBSHDF = -I/usr/include/hdf5/serial -L/usr/lib/x86_64-linux-gnu/hdf5/serial
 
@@ -46,28 +50,28 @@ LIBSHDF = -I/usr/include/hdf5/serial -L/usr/lib/x86_64-linux-gnu/hdf5/serial
 
 ##===========================================================
 
-all: sharedmemfortran,distribmemfortran,wrapforjulia,wrapforpython
+all: sharedmemfortran distribmemfortran wrapforjulia wrapforpython
 
 
 
 ## Compile test program in Fortran, serial/shared memory
 sharedmemfortran:
-	$(FC)  -std=f2008 -O3 -fno-realloc-lhs fortran/ompi_kronlininv.f08 fortran/rdwrhdf5.f08  fortran/test_ompi_kronlininv.f08 $(LIBSHDF) -lblas -llapack -lhdf5 -lhdf5_fortran $(OMP) -o $(OUTDIR)test.x 
-	rm *.mod *.o *.so # clean moduule and obj files
+	$(FC)  -std=f2008 -O3 -fno-realloc-lhs fortran/kronlininv.f08 fortran/rdwrhdf5.f08  fortran/test_kronlininv.f08 $(LIBSHDF) -lblas -llapack -lhdf5 -lhdf5_fortran $(OMP) -o $(OUTDIR)test.x 
+	rm *.mod #*.o *.so # clean module and obj files
 
 
 
 ## Compile test program in Fortran, distributed memory (OpenMPI)
 distribmemfortran: 
 	$(MPIFC) -std=f2008 -O3 -fno-realloc-lhs fortran/ompi_kronlininv.f08 fortran/rdwrhdf5.f08  fortran/test_ompi_kronlininv.f08 $(LIBSHDF) -lblas -llapack -lhdf5 -lhdf5_fortran -o $(OUTDIR)testMPI.x 
-	rm *.mod *.o *.so # clean moduule and obj files
+	rm *.mod  # clean moduue and obj files
 
 
 
 ## Compile Fortran wrappers for Julia
 wrapforjulia: 
 	$(FC)  -std=f2008 -O3 -funroll-loops -lblas -llapack fortran/kronlininv.f08  julia/wrap_kronlininv_julia.f90 $(OMP) -fPIC -shared -o julia/kronlininv_wrapjulia.so
-	rm *.mod *.o *.so # clean moduule and obj files
+	rm *.mod # clean module and obj files
 
 
 
@@ -82,7 +86,7 @@ wrapforpython:
 	f2py --f90flags="-fopenmp" -lgomp  -llapack -lblas  -c python/kronlininv.o  python/wrap_kronlininv_f2py.f90  -m kronlininv_f2py
 
 	mv kronlininv_f2py.so python/kronlininv_f2py.so
-	rm *.mod python/*.o # clean moduule and obj files
+	rm *.mod python/*.o # clean module and obj files
 
 
 

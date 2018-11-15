@@ -220,10 +220,12 @@ contains
     call symsolvels( Cd2, G2, iCdG2 )
     call symsolvels( Cd3, G3, iCdG3 )
 
-    !allocate(GtiCdG1(nm1,nm1),GtiCdG2(nm2,nm2),GtiCdG3(nm3,nm3))
-    GtiCdG1  = matmul( transpose(G1), iCdG1 )
-    GtiCdG2  = matmul( transpose(G2), iCdG2 ) 
-    GtiCdG3  = matmul( transpose(G3), iCdG3 )
+    !! avoid automatic reallocation from matmul...
+    !! so the code works with -fno-realloc-lhs in gfrotran
+    allocate(GtiCdG1(nm1,nm1),GtiCdG2(nm2,nm2),GtiCdG3(nm3,nm3))
+    GtiCdG1(:,:)  = matmul( transpose(G1), iCdG1 )
+    GtiCdG2(:,:)  = matmul( transpose(G2), iCdG2 ) 
+    GtiCdG3(:,:)  = matmul( transpose(G3), iCdG3 )
 
     !!--------------------------
     !!          fa
@@ -285,7 +287,7 @@ contains
     ! print*,shape(iUCm1),shape(iUCm2),shape(iUCm3)
     ! print*,shape(iUCmGtiCd1),shape(iUCmGtiCd2),shape(iUCmGtiCd3)
     ! print*,
-    print*,'calcfactors(): end '
+    ! print*,'calcfactors(): end '
   end subroutine calcfactors
 
   !!!==================================================
@@ -366,9 +368,9 @@ contains
 
     !! vectors containing all possible indices for 
     !!    row calculations of Kron prod AxBxC
-    iv =  (av-1)/(Nk*Nj)+1 
-    jv =  (av-1-(iv-1)*Nk*Nj)/Nk + 1 
-    kv =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
+    iv(:) =  (av-1)/(Nk*Nj)+1 
+    jv(:) =  (av-1-(iv-1)*Nk*Nj)/Nk + 1 
+    kv(:) =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
      
     !! allocate stuff
     Nr12 = size(U1,2)* size(U2,2)* size(U3,2)
@@ -392,7 +394,7 @@ contains
 
     totcount = aend-astart+1
     privcount = -1
-     if ( omp_get_thread_num()==0 ) write(OUTPUT_UNIT,*)
+    !!if ( omp_get_thread_num()==0 ) write(OUTPUT_UNIT,*)
     !$OMP DO PRIVATE(row2,col1,a,b)
     do a=astart,aend
        privcount = privcount + 1 
@@ -408,13 +410,13 @@ contains
        !! row first two factors
        !! a row x diag matrix 
        !!row2 =  U1(iv(a),lv) * U2(jv(a),mv) * U3(kv(a),nv) * diaginvlambda
-       row2 =  U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv) * diaginvlambda
+       row2(:) = U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv) * diaginvlambda
        
        do b=bstart,bend
           
           !! calculate one row of first TWO factors
           !!call columnAxBxC(Ni,Nj,Nk,Nl,Nm,Nn, iUCm1,iUCm2,iUCm3,b,col1)
-          col1 = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
+          col1(:) = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
 
           !! calculate one element of the posterior covariance
           postC(a,b) = sum(row2*col1)
@@ -468,7 +470,7 @@ contains
     integer,allocatable :: av(:)!,bv(:)
     integer,allocatable :: iv(:),jv(:),kv(:) !,lv(:),mv(:),nv(:) 
     integer :: p,aband,aend,bband,astart,d
-    integer :: nthr,privcount,everynit
+    integer :: nthr,privcount,everynit,totcount
     real(dp) :: eta,frac,startt,firststartt,endt    
     
     Ni = size(U1,1)
@@ -498,9 +500,9 @@ contains
 
     !! vectors containing all possible indices for 
     !!    row calculations of Kron prod AxBxC
-    iv =  (av-1)/(Nk*Nj)+1 
-    jv =  (av-1-(iv-1)*Nk*Nj)/Nk+1 
-    kv =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
+    iv(:) =  (av-1)/(Nk*Nj)+1 
+    jv(:) =  (av-1-(iv-1)*Nk*Nj)/Nk+1 
+    kv(:) =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
     !! vectors containing all possible indices for
     !!    column calculations of Kron prod AxBxC
     ! lv =  (bv-1)/(Nn*Nm) + 1 
@@ -512,10 +514,8 @@ contains
     Nc1  = size(iUCm1,1)* size(iUCm2,1)* size(iUCm3,1)
     allocate(row1(Nr12),row2(Nr12),col1(Nc1))
    
+    !!everynit = 250
     
-    everynit = 250
-    
-
     ! Lapack: http://www.netlib.org/lapack/lug/node124.html
     ! aij is stored in AB(ku+1+i-j,j) for max(1,j-ku) <= i <= \min(m,j+kl).
     !------------
@@ -533,6 +533,8 @@ contains
     !!=====================================
     firststartt = omp_get_wtime()
     
+    totcount = lowdiag+updiag+1
+    
     do d=-lowdiag,updiag
        if (d<0) then
           astart = abs(d)+1
@@ -547,36 +549,37 @@ contains
        !print*,'diagonal',d
        !! indices of normal matrix
        
-       print*,"Diagonal ",d," from range [",-lowdiag,",",updiag,"]"
+       !!print*,"Diagonal ",d," from range [",-lowdiag,",",updiag,"]"
        !-------------------------
        !$OMP PARALLEL
-       privcount = -1
+       !privcount = -1
        startt = omp_get_wtime()
        nthr = omp_get_num_threads()
        
-       !$OMP DO PRIVATE(row2,col1,a,b,aband,bband,privcount)
-       do a=astart,aend
-          privcount = privcount + 1 
-          if ( (omp_get_thread_num()==0 ) .and. (mod(privcount,everynit/nthr)==0) ) then          
-             frac = real(privcount,dp)/(real(Nb,dp)/real(nthr,dp))
-             eta = ( (omp_get_wtime()-startt) / real(privcount,dp) ) * &
-                  (real(aend-astart+1-nthr*privcount,dp)/real(nthr,dp))
-             write(OUTPUT_UNIT,fmt='(a27,f7.3,6x,a4,f12.2,1x,a3,a5)') 'bandpostcov():  %',&
-                  frac*100_dp,"ETA:",eta/60.0,"min",char(27)//'[1A'//achar(13)
-             flush(OUTPUT_UNIT) !! to make sure it prints immediately          
-          end if
+       if ( (omp_get_thread_num()==0 ) ) then 
+          frac = real(d+lowdiag,dp)/real(totcount,dp)
+          eta = (omp_get_wtime()-firststartt)/frac * (1.0_dp - frac)
+          write(OUTPUT_UNIT,fmt='(a19,f6.3,6x,a4,f12.2,1x,a3,a5)') ' bandpostcov():  % ',&
+               frac*100_dp,"ETA:",eta/60.0,"min",char(27)//'[1A'//achar(13)
+          flush(OUTPUT_UNIT) !! to make sure it prints immediately
+       end if
 
+       
+       !$OMP DO PRIVATE(row2,col1,a,b,aband,bband) !!,privcount)
+       do a=astart,aend
+          !privcount = privcount + 1 
+          
           b = a+d
           !! indices of the band matrix
           aband = updiag+1+a-b
           bband = b
 
           !! row first two factors
-          row2 = diaginvlambda * U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv)
+          row2(:) = diaginvlambda * U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv)
 
           !! calculate one row of first TWO factors
           !!call columnAxBxC(Ni,Nj,Nk,Nl,Nm,Nn, iUCm1,iUCm2,iUCm3,b,col1)
-          col1 = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
+          col1(:) = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
 
           !! calculate one element of the posterior covariance
           !! store it in the band storage format
@@ -587,11 +590,11 @@ contains
        !$OMP END DO
        endt = omp_get_wtime()
        !$OMP END PARALLEL
-       write(OUTPUT_UNIT,*)
-       print*,"bandpostcov():",endt-firststartt," OMP wall clock time"
     
     end do
- 
+    write(OUTPUT_UNIT,*)
+    print*,"bandpostcov():",endt-firststartt," OMP wall clock time"
+    
     
   end subroutine bandpostcov
 
@@ -650,7 +653,7 @@ contains
     character(8)  :: curdate
     character(10) :: curtime
 
-    write(OUTPUT_UNIT,*) "posteriormean(): calculating posterior mean... [using OpenMP]"
+    write(OUTPUT_UNIT,*) "posteriormean(): calculating posterior mean... "
     
     !! sizes
     Ni = size(Z1,1)
@@ -679,14 +682,14 @@ contains
 
     !! vectors containing all possible indices for 
     !!    row calculations of Kron prod AxBxC
-    iv =  (av-1)/(Nk*Nj)+1 
-    jv =  (av-1-(iv-1)*Nk*Nj)/Nk+1 
-    kv =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
+    iv(:) =  (av-1)/(Nk*Nj)+1 
+    jv(:) =  (av-1-(iv-1)*Nk*Nj)/Nk+1 
+    kv(:) =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
     !! vectors containing all possible indices for
     !!    column calculations of Kron prod AxBxC
-    lv =  (bv-1)/(Nn*Nm) + 1 
-    mv =  (bv-1-(lv-1)*Nn*Nm)/Nn + 1 
-    nv =  bv-(mv-1)*Nn-(lv-1)*Nn*Nm 
+    lv(:) =  (bv-1)/(Nn*Nm) + 1 
+    mv(:) =  (bv-1-(lv-1)*Nn*Nm)/Nn + 1 
+    nv(:) =  bv-(mv-1)*Nn-(lv-1)*Nn*Nm 
     !!  Gs have different shape than Us !!
 
     !!#######################
@@ -717,7 +720,7 @@ contains
           frac = real(privcount,dp)/(real(Nb,dp)/real(nthr,dp))
           eta = ( (omp_get_wtime()-startt) / real(privcount,dp) ) * &
                (real(Nb-nthr*privcount,dp)/real(nthr,dp))
-          write(OUTPUT_UNIT,fmt='(a27,f7.3,6x,a4,f12.2,1x,a3,a5)') 'posteriormean() loop 1/3: %',&
+          write(OUTPUT_UNIT,fmt='(a28,f7.3,6x,a4,f12.2,1x,a3,a5)') ' posteriormean() loop 1/3: %',&
                frac*100_dp,"ETA:",eta/60.0,"min",char(27)//'[1A'//achar(13)
           flush(OUTPUT_UNIT) !! to make sure it prints immediately          
        end if
@@ -741,7 +744,7 @@ contains
           frac = real(privcount,dp)/(real(Na,dp)/real(nthr,dp))
           eta = ( (omp_get_wtime()-startt) / real(privcount,dp) ) * &
                (real(Na-nthr*privcount,dp)/real(nthr,dp))
-          write(OUTPUT_UNIT,fmt='(a27,f7.3,6x,a4,f12.2,1x,a3,a5)') 'posteriormean() loop 2/3: %',&
+          write(OUTPUT_UNIT,fmt='(a28,f7.3,6x,a4,f12.2,1x,a3,a5)') ' posteriormean() loop 2/3: %',&
                frac*100_dp,"ETA:",eta/60.0,"min",char(27)//'[1A'//achar(13)
           flush(OUTPUT_UNIT) !! to make sure it prints immediately          
        end if
@@ -768,7 +771,7 @@ contains
           frac = real(privcount,dp)/(real(Na,dp)/real(nthr,dp))
           eta = ( (omp_get_wtime()-startt) / real(privcount,dp) ) * &
                (real(Na-nthr*privcount,dp)/real(nthr,dp))
-          write(OUTPUT_UNIT,fmt='(a27,f7.3,6x,a4,f12.2,1x,a3,a5)') 'posteriormean() loop 3/3: %',&
+          write(OUTPUT_UNIT,fmt='(a28,f7.3,6x,a4,f12.2,1x,a3,a5)') ' posteriormean() loop 3/3: %',&
                frac*100_dp,"ETA:",eta/60.0,"min",char(27)//'[1A'//achar(13)
           flush(OUTPUT_UNIT) !! to make sure it prints immediately          
        end if
@@ -828,7 +831,7 @@ contains
     end if
     allocate(tmpB(n,n))
     U = A
-    tmpB = Bpd
+    tmpB(:,:) = Bpd
     lwork=3*n-1
     ! lwork=-1 
     ! allocate(work(1))
@@ -865,7 +868,7 @@ contains
     n = size(A,1)
     nrhs = size(B,2)
     allocate(A2(n,n))
-    A2 = A
+    A2(:,:) = A
     lda = size(A,1)
     allocate(ipiv(n))
     ldb = size(b,1)
@@ -906,7 +909,7 @@ contains
     n = size(a,1)
     nrhs = size(b,2)
     allocate(A2(n,n))
-    A2 = A
+    A2(:,:) = A
     lda = size(A,1)
     allocate(ipiv(n))
     ldb = size(b,1)

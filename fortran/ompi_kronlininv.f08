@@ -488,22 +488,22 @@ contains
     nm = nm1*nm2*nm3
 
     !! compute preliminary stuff
-    print*,'calcfactors(): compute preliminary stuff'
+    if (myrank==masterrank) write(OUTPUT_UNIT,*) 'calcfactors(): compute preliminary stuff'
     allocate(iCdG1(nd1,nm1),iCdG2(nd2,nm2),iCdG3(nd3,nm3))
     call symsolvels( Cd1, G1, iCdG1 )
     call symsolvels( Cd2, G2, iCdG2 )
     call symsolvels( Cd3, G3, iCdG3 )
 
     allocate(GtiCdG1(nm1,nm1),GtiCdG2(nm2,nm2),GtiCdG3(nm3,nm3))
-    GtiCdG1  = matmul( transpose(G1), iCdG1 )
-    GtiCdG2  = matmul( transpose(G2), iCdG2 ) 
-    GtiCdG3  = matmul( transpose(G3), iCdG3 )
+    GtiCdG1(:,:)  = matmul( transpose(G1), iCdG1 )
+    GtiCdG2(:,:)  = matmul( transpose(G2), iCdG2 ) 
+    GtiCdG3(:,:)  = matmul( transpose(G3), iCdG3 )
 
     !!--------------------------
     !!          fa
     !!--------------------------
     !! compute eigendecomposition
-    print*,'calcfactors(): compute fa'
+    if (myrank==masterrank) write(OUTPUT_UNIT,*) 'calcfactors(): compute fa'
     allocate(lambda1(nm1),lambda2(nm2),lambda3(nm3))
     uplo = 'L'
     call symgeneigvv(GtiCdG1,uplo,Cm1,lambda1,U1)
@@ -514,7 +514,7 @@ contains
     !!          fb
     !!--------------------------
     !! calculates diagonal central factor
-    print*,'calcfactors(): compute fb'
+    if (myrank==masterrank) write(OUTPUT_UNIT,*) 'calcfactors(): compute fb'
     p=1
     do i=1,nm1
        do j=1,nm2
@@ -529,7 +529,7 @@ contains
     !!          fc
     !!--------------------------
     !! computes U1^-1 Cmx, U2^-1 Cmy, U3^-1 Cmz
-    print*,'calcfactors(): compute fc'
+    if (myrank==masterrank) write(OUTPUT_UNIT,*) 'calcfactors(): compute fc'
     call solvels( U1, Cm1, iUCm1 )
     call solvels( U2, Cm2, iUCm2 )
     call solvels( U3, Cm3, iUCm3 )
@@ -538,7 +538,7 @@ contains
     !!--------------------------
     !!          fd
     !!--------------------------
-    print*,'calcfactors(): compute fd'
+    if (myrank==masterrank) write(OUTPUT_UNIT,*) 'calcfactors(): compute fd'
     allocate(ide1(nd1,nd1),ide2(nd2,nd2),ide3(nd3,nd3))
     ide1 = 0.0_dp  ! Initialize the array.
     ide2 = 0.0_dp
@@ -551,11 +551,11 @@ contains
     call symsolvels( Cd2, ide2, iCd2 )
     call symsolvels( Cd3, ide3, iCd3 )
 
-    iUCmGtiCd1 = matmul( iUCm1, matmul( transpose(G1), iCd1 ))     
-    iUCmGtiCd2 = matmul( iUCm2, matmul( transpose(G2), iCd2 )) 
-    iUCmGtiCd3 = matmul( iUCm3, matmul( transpose(G3), iCd3 ))
+    iUCmGtiCd1(:,:) = matmul( iUCm1, matmul( transpose(G1), iCd1 ))     
+    iUCmGtiCd2(:,:) = matmul( iUCm2, matmul( transpose(G2), iCd2 )) 
+    iUCmGtiCd3(:,:) = matmul( iUCm3, matmul( transpose(G3), iCd3 ))
 
-    print*,"calcfactors(): end "
+    !if (myrank==masterrank) print*,"calcfactors(): end "
   end subroutine calcfactors
 
   !!!==================================================
@@ -606,7 +606,7 @@ contains
     character(len=30) :: loopinfo
 
     if (myrank==masterrank) then
-       write(OUTPUT_UNIT,*) "posteriormean(): calculating posterior mean... [using OpenMPI]"
+       write(OUTPUT_UNIT,*) "posteriormean(): calculating posterior mean... using OpenMPI]"
     end if
     
     Ni = size(U1,1)
@@ -644,9 +644,9 @@ contains
 
     !! vectors containing all possible indices for 
     !!    row calculations of Kron prod AxBxC
-    iv =  (av-1)/(Nk*Nj)+1 
-    jv =  (av-1-(iv-1)*Nk*Nj)/Nk + 1 
-    kv =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
+    iv(:) =  (av-1)/(Nk*Nj)+1 
+    jv(:) =  (av-1-(iv-1)*Nk*Nj)/Nk + 1 
+    kv(:) =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
      
     !! allocate stuff
     Nr12 = size(U1,2)* size(U2,2)* size(U3,2)
@@ -685,14 +685,14 @@ contains
        !! row first two factors
        !! a row x diag matrix 
        !!row2 =  U1(iv(a),lv) * U2(jv(a),mv) * U3(kv(a),nv) * diaginvlambda
-       row2 =  U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv) * diaginvlambda
+       row2(:) =  U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv) * diaginvlambda
 
        j=0
        do b=bstart,bend
           j=j+1
           !! calculate one row of first TWO factors
           !!call columnAxBxC(Ni,Nj,Nk,Nl,Nm,Nn, iUCm1,iUCm2,iUCm3,b,col1)
-          col1 = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
+          col1(:) = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
 
           !! calculate one element of the posterior covariance
           i = irow-looping(myrank+1,1)+1
@@ -710,7 +710,7 @@ contains
              !!----------------------
              !! send/rec each row
              !print*,"==>",myrank,": sender=",sender,"i=",i
-             if (myrank==sender) sendrow = postcmpi(i,:)
+             if (myrank==sender) sendrow(:) = postcmpi(i,:)
              call para_srarr1ddp(sender,masterrank,i,sendrow,recvrow)
              !call para_srint(myrank,masterrank,impicount,irow,rirow)
              if (myrank==masterrank)  postC(i,:) = recvrow
@@ -720,9 +720,8 @@ contains
     
     call para_barrier()
     if (myrank==masterrank) then
-       write(OUTPUT_UNIT,*)
        endt = MPI_Wtime()
-       print*,"blockpostcov():",endt-firststartt," MPI wall clock time"
+       print*," blockpostcov():",endt-firststartt," MPI wall clock time"
     end if    
 
   end subroutine blockpostcov
@@ -800,9 +799,9 @@ contains
 
     !! vectors containing all possible indices for 
     !!    row calculations of Kron prod AxBxC
-    iv =  (av-1)/(Nk*Nj)+1 
-    jv =  (av-1-(iv-1)*Nk*Nj)/Nk+1 
-    kv =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
+    iv(:) =  (av-1)/(Nk*Nj)+1 
+    jv(:) =  (av-1-(iv-1)*Nk*Nj)/Nk+1 
+    kv(:) =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
     !! vectors containing all possible indices for
     !!    column calculations of Kron prod AxBxC
     ! lv =  (bv-1)/(Nn*Nm) + 1 
@@ -885,11 +884,11 @@ contains
                          
           !!----------------------------------------------------------------
           ! row first two factors
-          row2 = diaginvlambda * U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv)
+          row2(:) = diaginvlambda * U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv)
 
           !! calculate one row of first TWO factors
           !!call columnAxBxC(Ni,Nj,Nk,Nl,Nm,Nn, iUCm1,iUCm2,iUCm3,b,col1)
-          col1 = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
+          col1(:) = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
 
           !! calculate one element of the posterior covariance
           !! store it in the band storage format
@@ -903,7 +902,6 @@ contains
        !! send/recv rows                                                      
        !! collect all results in masterrank
        
-
        bband1 = looping(myrank+1,1)+d !!b = a+d
        bband2 = looping(myrank+1,2)+d
        
@@ -1003,14 +1001,14 @@ contains
 
     !! vectors containing all possible indices for 
     !!    row calculations of Kron prod AxBxC
-    iv =  (av-1)/(Nk*Nj)+1 
-    jv =  (av-1-(iv-1)*Nk*Nj)/Nk+1 
-    kv =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
+    iv(:) =  (av-1)/(Nk*Nj)+1 
+    jv(:) =  (av-1-(iv-1)*Nk*Nj)/Nk+1 
+    kv(:) =  av-(jv-1)*Nk-(iv-1)*Nk*Nj 
     !! vectors containing all possible indices for
     !!    column calculations of Kron prod AxBxC
-    lv =  (bv-1)/(Nn*Nm) + 1 
-    mv =  (bv-1-(lv-1)*Nn*Nm)/Nn + 1 
-    nv =  bv-(mv-1)*Nn-(lv-1)*Nn*Nm 
+    lv(:) =  (bv-1)/(Nn*Nm) + 1 
+    mv(:) =  (bv-1-(lv-1)*Nn*Nm)/Nn + 1 
+    nv(:) =  bv-(mv-1)*Nn-(lv-1)*Nn*Nm 
     !!  Gs have different shape than Us !!
 
     !!#######################
@@ -1029,7 +1027,7 @@ contains
     !!#    dobs - dcalc     #
     !!#######################
     startt = MPI_Wtime()    
-    loopinfo = "posteriormean(): loop 1/3"
+    loopinfo = " posteriormean(): loop 1/3"
     if (myrank==masterrank) write(OUTPUT_UNIT,*)
     !! calculate scheduling for Nb
     call spreadwork(Nb,numcpus,scheduling,looping,1)
@@ -1053,11 +1051,8 @@ contains
     !! assemble full ddfiff and broadcast it
     !! displacements  must start from 0, not 1, so looping-1
     call para_allgathv1ddp( scheduling,looping(:,1)-1, ddiffmpi, ddiff )
-    if (myrank==masterrank) then
-       print*,"time for first allgatherv:",MPI_Wtime()-startt,"s"
-    end if
-
-    
+    !if (myrank==masterrank)  print*," time for first allgatherv:",MPI_Wtime()-startt,"s"
+        
     !!#######################
     !!#   === U d Z h ===   #
     !!#######################
@@ -1084,9 +1079,8 @@ contains
     startt = MPI_Wtime()
     !! assemble full Zh and broadcast it
     call para_allgathv1ddp( scheduling,looping(:,1)-1, Zhmpi, Zh )
-    if (myrank==masterrank) then
-       print*,"time for second allgatherv:",MPI_Wtime()-startt,"s"
-    end if
+    !if (myrank==masterrank) print*," time for second allgatherv:",MPI_Wtime()-startt,"s"
+
     
     !!-----------------------------------------------
     !! Second loop
@@ -1120,16 +1114,12 @@ contains
     startt = MPI_Wtime()    
     !! assemble full postm only for masterrank
     call para_gathv1ddp( scheduling,looping(:,1)-1, masterrank, postmmpi, postm )
-    if (myrank==masterrank) then
-       print*,"time for third allgatherv:",MPI_Wtime()-startt,"s"
-    end if
-
+    !if (myrank==masterrank) print*," time for third allgatherv:",MPI_Wtime()-startt,"s"
+    
 
     if (myrank==masterrank) then
-       write(OUTPUT_UNIT,*)
-       write(OUTPUT_UNIT,*)
        endt = MPI_Wtime()
-       print*,"posteriormean():",endt-firststartt," MPI wall clock time"
+       print*," posteriormean():",endt-firststartt," MPI wall clock time"
     end if
 
     !print*,myrank,":",shape(ddiffmpi),shape(Zhmpi),shape(elUDZhmpi),shape(postmmpi),&
@@ -1178,7 +1168,7 @@ contains
     end if
     allocate(tmpB(n,n))
     U = A
-    tmpB = Bpd
+    tmpB(:,:) = Bpd
     lwork=3*n-1
     ! lwork=-1 
     ! allocate(work(1))
@@ -1215,7 +1205,7 @@ contains
     n = size(A,1)
     nrhs = size(B,2)
     allocate(A2(n,n))
-    A2 = A
+    A2(:,:) = A
     lda = size(A,1)
     allocate(ipiv(n))
     ldb = size(b,1)
@@ -1256,12 +1246,12 @@ contains
     n = size(a,1)
     nrhs = size(b,2)
     allocate(A2(n,n))
-    A2 = A
+    A2(:,:) = A
     lda = size(A,1)
     allocate(ipiv(n))
     ldb = size(b,1)
     ! copy B to sol to avoid it to be overwritten
-    sol = B
+    sol(:,:) = B
     ! apparently work must be allocated for the query to dsysv to work...
     allocate(work(1)) 
     lwork = -1

@@ -45,7 +45,6 @@ The Fortran code is intended to be inserted in the user code in the form of a se
 
 _The **first** thing to compute is always the set of "factors" using the subroutine calcfactors(), then the posterior mean or covariance (or part of it) can be computed._
 
-
 _Remark_: The OpenMPI version of the Fortran subroutines needs at least an MPI\_init() before and MPI\_finalize() after from the calling code. A convenience module "parautil" is provided with several utility routines. See "test\_ompi\_kronlininv.f03" for an example, where para\_init() and para\_finish() are used to open and close the MPI interface.
 
 The input HDF5 file for the test programs must contain the following arrays: 
@@ -55,6 +54,11 @@ The input HDF5 file for the test programs must contain the following arrays:
 - dobs, the observed data vector
 - mprior, the mean prior model vector
 
+The directory "examples" contains an example data set that can be used to run the two Fortran test programs. Compile one or both of the Fortran versions of KronLinInv using the Makefile, place the executable in the "example" directory and then launch the programs with  
+./test.x  
+or  
+mpirun -np [num-of-procs] testMPI.x  
+for the shared and distributed memory, respectively.
 
 #### Julia
 
@@ -71,7 +75,8 @@ List of available functions:
 
 Fortran wrappers (see Makefile for compiling the Fortran code):
 
-- fortran\_calcfactors(...), fortran\_posteriormean(...) and  fortran\_blockpostcov(...): perform the same calculations of the function described above but by calling the Fortran subroutines. Note that fortran\_posteriormean(...) calls the serial Fortran version.
+- fortran\_calcfactors(...), fortran\_posteriormean(...) and  fortran\_blockpostcov(...): perform the same calculations of the function described above but by calling the Fortran subroutines. Note that fortran\_posteriormean(...) calls the serial Fortran version. The "fortranlibfl" argument shold point to the shared library "kron\_utils.so", for instance: fortranlibfl = "julia/kron\_utils.so".
+ 
 
 #### Python
 
