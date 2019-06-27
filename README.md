@@ -9,6 +9,11 @@ Andrea Zunino, Klaus Mosegaard,
 Computers & Geosciences, 2018
 ISSN 0098-3004, <https://doi.org/10.1016/j.cageo.2018.09.005>.
 
+---
+
+**New**: a pure parallel Julia implementation is work in progress, see <https://github.com/inverseproblem/KronLinInv.jl>
+
+---
 
 Few versions of the code for different languages are provided:
 
