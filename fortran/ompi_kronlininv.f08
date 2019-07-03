@@ -238,7 +238,7 @@ contains
                MPI_COMM_WORLD, mpierr)
        end if
        if (myrank==dest) then
-          !print*,"receiving in ",myrank," from ",source," tag=",tag
+            !print*,"receiving in ",myrank," from ",source," tag=",tag
           call MPI_RECV(recvrow, nelem, DP_REAL_TYPE, source, tag,&
                MPI_COMM_WORLD, mpistat, mpierr)
        end if
@@ -606,7 +606,7 @@ contains
     character(len=30) :: loopinfo
 
     if (myrank==masterrank) then
-       write(OUTPUT_UNIT,*) "posteriormean(): calculating posterior mean... using OpenMPI]"
+       write(OUTPUT_UNIT,*) "blockpostcov(): calculating a block of postcov... [using OpenMPI]"
     end if
     
     Ni = size(U1,1)

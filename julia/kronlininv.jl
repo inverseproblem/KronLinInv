@@ -134,7 +134,7 @@ function fortran_blockpostcov(U1::Array{Float64,2},U2::Array{Float64,2},U3::Arra
     # input arguments should be declared as of type Ref{T}, as Fortran
     # passes all variables by reference. The return type should either be
     # Void for Fortran subroutines, or a T for Fortran functions returning the type T.
-    ccall( wpmean, Cvoid,
+    ccall( wblcov, Cvoid,
           (Ref{Cint},Ref{Cint},Ref{Cint},
            Ref{Cdouble},Ref{Cdouble},Ref{Cdouble},Ref{Cdouble},Ref{Cdouble},
            Ref{Cdouble},Ref{Cdouble},
@@ -372,6 +372,11 @@ function posteriormean(U1::Array{Float64,2},U2::Array{Float64,2},U3::Array{Float
                 print("loop 1/3: $b of $Nb; ETA: $reta min \r")
                 flush(stdout)
             end
+
+            # !!---------------------------------------------------------------------------
+            # ddiff(b) = dobs(b) - sum(mprior * G1(lv(b),iv) * G2(mv(b),jv) * G3(nv(b),kv))
+            # !!---------------------------------------------------------------------------
+
             datp = 0.0
             for j=1:Na
                 elG = G1[lv[b],iv[j]] * G2[mv[b],jv[j]] * G3[nv[b],kv[j]]

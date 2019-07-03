@@ -388,20 +388,17 @@ contains
 
     
     !!------------------------
-    !$OMP PARALLEL PRIVATE(privcount)
-    startt = omp_get_wtime()
-    nthr = omp_get_num_threads()
+    call cpu_time(startt) 
 
     totcount = aend-astart+1
     privcount = -1
-    !!if ( omp_get_thread_num()==0 ) write(OUTPUT_UNIT,*)
-    !$OMP DO PRIVATE(row2,col1,a,b)
     do a=astart,aend
        privcount = privcount + 1 
-       if ( (omp_get_thread_num()==0 ) .and. (mod(privcount,everynit/nthr)==0) ) then          
-          frac = real(privcount,dp)/(real(totcount,dp)/real(nthr,dp))
-          eta = ( (omp_get_wtime()-startt) / real(privcount,dp) ) * &
-               (real(totcount-nthr*privcount,dp)/real(nthr,dp))
+       if  (mod(privcount,everynit)==0) then
+          call cpu_time(endt)
+          frac = real(privcount,dp)/(real(totcount,dp))
+          eta = ( real(endt-startt,dp) / real(privcount,dp) ) * &
+               (real(totcount-privcount,dp))
           write(OUTPUT_UNIT,fmt='(a19,f7.3,6x,a4,f12.2,1x,a3,a5)') 'blockpostcov():  %',&
                frac*100_dp,"ETA:",eta/60.0,"min",char(27)//'[1A'//achar(13)
           flush(OUTPUT_UNIT) !! to make sure it prints immediately          
@@ -412,22 +409,27 @@ contains
        !!row2 =  U1(iv(a),lv) * U2(jv(a),mv) * U3(kv(a),nv) * diaginvlambda
        row2(:) = U1(iv(a),iv) * U2(jv(a),jv) * U3(kv(a),kv) * diaginvlambda
        
+
+       !$OMP PARALLEL 
+       !$OMP PARALLEL DO PRIVATE(b,col1)
        do b=bstart,bend
           
           !! calculate one row of first TWO factors
           !!call columnAxBxC(Ni,Nj,Nk,Nl,Nm,Nn, iUCm1,iUCm2,iUCm3,b,col1)
+          
           col1(:) = iUCm1(iv,iv(b)) * iUCm2(jv,jv(b)) * iUCm3(kv,kv(b))
-
+          
           !! calculate one element of the posterior covariance
           postC(a,b) = sum(row2*col1)
-
+          
        end do       
+       !! !$OMP END DO
+       !$OMP END PARALLEL
+
     end do
-    !$OMP END DO
-    endt = omp_get_wtime()
-    !$OMP END PARALLEL
+    call cpu_time(endt)
     write(OUTPUT_UNIT,*)
-    print*,"blockpostcov():",endt-startt," OMP wall clock time"
+    print*,"blockpostcov():",endt-startt,"s elapsed"
 
   end subroutine blockpostcov
 
