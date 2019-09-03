@@ -11,7 +11,7 @@ ISSN 0098-3004, <https://doi.org/10.1016/j.cageo.2018.09.005>.
 
 ---
 
-**New**: a pure parallel Julia implementation is work in progress, see <https://github.com/inverseproblem/KronLinInv.jl>
+**New**: a pure parallel Julia implementation is available, see <https://github.com/inverseproblem/KronLinInv.jl>
 
 ---
 
@@ -19,7 +19,7 @@ Few versions of the code for different languages are provided:
 
 - Fortran (2008): a simple serial version, where OpenMP (parallelisation for shared memory architecture) can be turned on at compile time and a parallel distributed memory OpenMPI version (the "main" implementation);
 
-- Julia: a pure Julia implementation (serial and parallel - fairly fast) and wrappers from Julia to the Fortran routines;
+- Julia: a new package available, see <https://github.com/inverseproblem/KronLinInv.jl>
 
 - Python: a pure Python implementation (quite slow, mostly for learning purposes) and wrappers from Python to the Fortran routines.
 
@@ -66,6 +66,8 @@ mpirun -np [num-of-procs] testMPI.x
 for the shared and distributed memory, respectively.
 
 #### Julia
+
+*What follows is an outdated version of the code, please use the new Julia package KronLinInv.jl, see <https://github.com/inverseproblem/KronLinInv.jl>.*
 
 To use the following functions the file "kronlininv.jl" in the julia directory must be included in your code. For instance: include("kronlininv.jl")
 _The **first** thing to compute is always the set of "factors" using the function calcfactors(), then the posterior mean or covariance (or part of it) can be computed._
