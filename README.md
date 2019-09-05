@@ -1,5 +1,7 @@
 # KronLinInv
 
+[![Docs](https://img.shields.io/badge/docs-blue.svg)](https://inverseproblem.github.io/KronLinInv/)
+
 Kronecker-product-based linear inversion of geophysical (or other kinds of) data under Gaussian and separability assumptions. The code computes the posterior mean model and the posterior covariance matrix (or subsets of it) in an efficient manner (parallel algorithm) taking into account 3-D correlations both in the model parameters and in the observed data.
 
 If you use this code for research or else, please cite the related paper:
@@ -11,7 +13,9 @@ ISSN 0098-3004, <https://doi.org/10.1016/j.cageo.2018.09.005>.
 
 ---
 
-**New**: a pure parallel Julia implementation is available, see <https://github.com/inverseproblem/KronLinInv.jl>
+**New**: a parallel pure Julia implementation is available, see <https://github.com/inverseproblem/KronLinInv.jl>
+
+**New**: a pure Python implementation is available, see <https://github.com/inverseproblem/pyKronLinInv>
 
 ---
 
@@ -67,7 +71,7 @@ for the shared and distributed memory, respectively.
 
 #### Julia
 
-*What follows is an outdated version of the code, please use the new Julia package KronLinInv.jl, see <https://github.com/inverseproblem/KronLinInv.jl>.*
+**What follows is an outdated version of the code, please use the new Julia package KronLinInv.jl, see <https://github.com/inverseproblem/KronLinInv.jl>.**
 
 To use the following functions the file "kronlininv.jl" in the julia directory must be included in your code. For instance: include("kronlininv.jl")
 _The **first** thing to compute is always the set of "factors" using the function calcfactors(), then the posterior mean or covariance (or part of it) can be computed._
@@ -86,6 +90,8 @@ Fortran wrappers (see Makefile for compiling the Fortran code):
  
 
 #### Python
+
+**What follows is an outdated version of the code, please use the new Python package pyKronLinInv, see <https://github.com/inverseproblem/pyKronLinInv>.**
 
 To use the following functions import the file kronlininv.py as a module, i.e., "import kronlininv".
 _The **first** thing to compute is always the set of "factors" using the function calcfactors(), then the posterior mean or covariance (or part of it) can be computed._
