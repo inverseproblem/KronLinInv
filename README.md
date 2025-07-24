@@ -12,11 +12,11 @@ Computers & Geosciences, 2018
 ISSN 0098-3004, <https://doi.org/10.1016/j.cageo.2018.09.005>.
 
 ---
+**News**:
 
-**New**: a parallel pure Julia implementation is available, see <https://github.com/inverseproblem/KronLinInv.jl>
+### The Julia implementation, `KronLinInv.jl`, has become part of [`InverseAlgos.jl`](https://github.com/GinvLab/InverseAlgos.jl), hosted at [G⁻¹Lab](https://github.com/GinvLab) 
 
-**New**: a pure Python implementation is available, see <https://github.com/inverseproblem/pyKronLinInv>
-
+#### The other implementations are unmaintained.
 ---
 
 Few versions of the code for different languages are provided:
